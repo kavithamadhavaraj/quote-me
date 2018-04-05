@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <script>
+  function getAttachment(id){
+    google.script.run.withSuccessHandler(showAttachments).retrieveAttachments(id);
+  }
+  
+  function getQuote(id){
+      google.script.run.retrieveQuote(id);
+      google.script.run.withSuccessHandler(navigate).getScriptURL("?page=quote-page")   
+  }
+  
+  function showAttachments(attachments){
+    document.getElementById("mail-table").style.display = "none";
+    document.getElementById("attachment-table").style.display = "block";
+    let tableBody = document.getElementById("attachment-table").getElementsByTagName("tbody")[0];
+    for(let att of attachments){
+      var newRow   = tableBody.insertRow(tableBody.rows.length);
+      newRow.innerHTML = '<tr><td onclick=getQuote("'+att.id+'")><b>'+att.filename+'</b></td></tr>';
+    }
+  }
+  
+  function navigate(url){
+     window.open(url,"_top");
+  }
+  
+  function redirectToHome(){
+   google.script.run.withSuccessHandler(navigate).getScriptURL("");   
+ }
+ 
+  function mailSuccess(mailObj) {    
+      let tableBody = document.getElementById("mail-table").getElementsByTagName("tbody")[0];
+        for(let mail of mailObj){
+          //console.log(mail);
+          const SUBJECT = mail.subject;
+          for(let message of mail.messages){
+              let sender = message.sender;
+              let date = message.date;
+              let id = message.id;
+              var newRow   = tableBody.insertRow(tableBody.rows.length);
+              const SUBJECT = mail.subject;
+              newRow.innerHTML = '<tr><td>'+date+'</td><td>'+sender+'</td><td onclick=getAttachment("'+id+'")><b>'+SUBJECT+'</b></td></tr>';
+          }
+     }
+  }
+  google.script.run.withSuccessHandler(mailSuccess).retrieveMails();
+  </script>  
+  <body>
+    <body>
+    <div align="center" style="overflow-x:auto;">
+        <table id="mail-table">
+            <tr><th>Date</th><th>Sender</th><th>Subject</th></tr>
+        </table>
+        <table id="attachment-table" style="display:none;">
+            <tr><th>Attachment Name</th></tr>
+        </table>
+        <button id="home-button" style="display:block;" onclick="redirectToHome()">Home</button>
+    </div>
+  </body>
+  </body>
+</html>
+
+

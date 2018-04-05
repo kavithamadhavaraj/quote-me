@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+ <style>
+ table.blueTable {
+  border: 1px solid #1C6EA4;
+  background-color: #EEEEEE;
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+}
+table.blueTable td, table.blueTable th {
+  border: 1px solid #AAAAAA;
+  padding: 3px 2px;
+}
+table.blueTable tbody td {
+  font-size: 13px;
+}
+table.blueTable tr:nth-child(even) {
+  background: #D0E4F5;
+}
+ table.blueTable tfoot {
+  font-size: 14px;
+  font-weight: bold;
+  color: #FFFFFF;
+  background: #D0E4F5;
+  background: -moz-linear-gradient(top, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
+  background: -webkit-linear-gradient(top, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
+  background: linear-gradient(to bottom, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
+  border-top: 2px solid #444444;
+}
+table.blueTable tfoot button {
+  text-align: right;
+}
+table.blueTable tfoot td {
+  font-size: 14px;
+}
+table.blueTable tfoot button{
+  display: inline-block;
+  background: #1C6EA4;
+  color: #FFFFFF;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+ </style>
+ <script>
+  var currOffset = 0;
+  var hasData = true;
+  var tableBody = null;
+  displayNext();
+  function retreiveSuccess(mailObj) {
+      //console.log(currOffset);
+      //console.log(mailObj);
+       
+      if(mailObj.next == false){
+        document.getElementById("next-button").style.display = "none";   
+        document.getElementById("back-button").style.display = "block";
+        document.getElementById("send-mail-button").style.display = "block";   
+      }
+      else if(currOffset==0){
+        document.getElementById("next-button").style.display = "block";
+        document.getElementById("back-button").style.display = "none";
+        document.getElementById("send-mail-button").style.display = "none";   
+      }
+      else if((mailObj.next != false) && (currOffset !=0)){
+        document.getElementById("next-button").style.display = "block";
+        document.getElementById("back-button").style.display = "block";
+        document.getElementById("send-mail-button").style.display = "none";   
+      }
+      tableBody = document.getElementById("quote-table").getElementsByTagName("tbody")[0];
+      tableBody.innerHTML = "";
+       for(var index in mailObj.data){
+          var newRow   = tableBody.insertRow(tableBody.rows.length);
+          let rowData  = '<tr>';
+          var row = mailObj.data[index];
+          for(var i=0; i<row.length-1; i++){     
+              rowData += '<td>'+row[i]+'</td>';  
+          }
+          if (row[row.length-1].toString().indexOf("Rs.") > -1)                
+               rowData += "<td><input type=number value='"+getAmount(row[row.length-1])+"'></input></td></tr>"
+          else{
+              if(row[row.length-1] != "")
+                 rowData += "<td>"+row[row.length-1]+"</td>";
+              rowData += "<td><input placeholder='Net Rate/- KG' type=number></input></td></tr>";
+         }
+         newRow.innerHTML = rowData;
+      }
+      currOffset = mailObj.end_index + 1;
+  }
+  
+  function saveQuoteValues(){
+    var responseArray = null;
+    if (tableBody != null){
+      responseArray = convertTo2DArray(tableBody);
+    }
+    google.script.run.saveQuote(responseArray, currOffset - 5)
+  }
+  function displayNext(){
+     saveQuoteValues();
+     display();
+  }
+  function displayPrevious(){    
+    saveQuoteValues();
+    currOffset -= 10;
+    display(currOffset);
+  }
+  
+  function sendReviewMail(){
+    saveQuoteValues();
+    google.script.run.withSuccessHandler(mailSuccess).sendMail();
+  }
+  
+ function display(offset=currOffset){
+   google.script.run.withSuccessHandler(retreiveSuccess).show5rows(currOffset);
+ }
+ 
+ function mailSuccess(status){
+    if(status == "SUCCESS"){
+      alert("Mail sent successfully.");
+    }
+    else{
+      alert("Error saving / retrieving quotation.. Contact admin.");
+    }
+ }
+ 
+ function redirectToHome(){
+   google.script.run.withSuccessHandler(navigate).getScriptURL("");   
+ }
+ 
+ function navigate(url){
+     window.open(url,"_top");
+  }
+ 
+ function convertTo2DArray(tableBody){
+   var response = []
+   for(var i=0; i<tableBody.rows.length; i++){
+     var row = [];
+     var cells = tableBody.rows[i].cells;
+     for(var j=0; j<cells.length-1; j++){
+       row.push(cells[j].textContent);
+     }
+     row.push(cells[cells.length-1].firstChild.value)
+     response.push(row);
+   }
+   //console.log(response);
+   return response;
+ }
+ function getAmount(quoteStr){
+   var result = quoteStr.match(/Rs.(.*)\/-KG/);
+   if (result.length > 1)
+     return result[1];
+   else 
+     return null;
+ }
+ </script>  
+  <body>
+    <body>
+    <div align="center" style="overflow-x:auto;">
+        <table id="quote-table" class="blueTable">
+        <tr></tr>
+        <tfoot>
+        <tr>
+        <td colspan="2">
+          <button id="back-button" style="display:none;" onclick="displayPrevious()">Back</button>
+          <button id="next-button" style="display:none;" onclick="displayNext()">Next</button>
+          <button id="send-mail-button" style="display:none;" onclick="sendReviewMail()">Send Email</button>
+          <button id="home-button" style="display:block;" onclick="redirectToHome()">Home</button>
+        </td>
+        </tr>
+        </tfoot>
+        </table>       
+     </div>
+  </body>
+  </body>
+</html>
+
+
