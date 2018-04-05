@@ -11,7 +11,7 @@ Author: Kavitha Madhavaraj
 var possibleSenders = ["kavitha","giridhar","humera","kesavan"]
 
 //recepient email address to forward the responded quotation 
-var target = ["kavitha.madhavaraj@gmail.com"]
+var target = ["kavitha********@gmail.com"]
 
 //check if the sender name matches the keyword
 function patternMatch(fromAddress){
